@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -20,11 +20,11 @@
 </head>
 <body>
 
-  <h1>🔴 Table 3 - Franchise Outlet Menu</h1>
+  <h1>🔴 Table 3 - Select Items</h1>
   
   <div id="menuContainer"></div>
 
-  <a href="table3_page2.html" class="nav-btn">View Cart & Checkout &rarr;</a>
+  <a href="https://kshitij-bhuwania.github.io/table-3-checkout/" class="nav-btn">View Cart & Checkout &rarr;</a>
 
   <script>
     const TABLE_KEY = "cart_table_3";
