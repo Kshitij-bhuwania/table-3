@@ -1,33 +1,50 @@
 
-<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Table 3 - Menu</title>
+  <title>Table 1 - Menu</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; background: #f8f9fa; }
     h1 { color: #2c3e50; text-align: center; }
-    .category-title { color: #d35400; border-bottom: 2px solid #e67e22; padding-bottom: 5px; margin-top: 30px; text-transform: uppercase; font-size: 18px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-top: 15px; }
+    
+    /* Dropdown Styling */
+    .dropdown-container { margin-bottom: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background: #fff; overflow: hidden; }
+    .dropdown-btn { width: 100%; background: #fff; color: #d35400; font-size: 18px; font-weight: bold; text-align: left; padding: 15px; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; border-bottom: 2px solid #e67e22; }
+    .dropdown-btn:hover { background: #fdfefe; }
+    .dropdown-content { display: none; padding: 15px; background: #fafafa; }
+    .dropdown-content.active { display: block; }
+    .arrow { transition: transform 0.3s ease; }
+    .arrow.open { transform: rotate(180deg); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
     .card { background: white; border: 1px solid #e0e0e0; padding: 12px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .card h4 { margin: 5px 0; font-size: 15px; color: #333; }
     .price { color: #27ae60; font-weight: bold; margin: 8px 0; font-size: 16px; }
+    
+    /* Controls Styling */
+    .qty-controls { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px; }
+    .qty-btn { background: #e0e0e0; color: #333; border: none; border-radius: 4px; padding: 4px 10px; font-weight: bold; cursor: pointer; font-size: 16px; }
+    .qty-btn:hover { background: #d0d0d0; }
+    .qty-count { font-weight: bold; font-size: 16px; min-width: 20px; display: inline-block; }
     button { padding: 6px 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
     .btn-add { background: #28a745; color: white; }
-    .btn-add:disabled { background: #b2bec3; }
-    .btn-remove { background: #dc3545; color: white; margin-left: 5px; }
+    .btn-add:hover { background: #218838; }
+    .btn-remove { background: #dc3545; color: white; width: 100%; }
+    .btn-remove:hover { background: #c82333; }
     .nav-btn { display: block; width: 220px; margin: 30px auto; background: #007bff; color: white; text-decoration: none; padding: 12px 20px; border-radius: 6px; font-weight: bold; text-align: center; }
   </style>
 </head>
 <body>
 
-  <h1>🔴 Table 3 - Select Items</h1>
+  <h1>🔴 Table 1 - Select Items</h1>
   
   <div id="menuContainer"></div>
 
-  <a href="https://kshitij-bhuwania.github.io/table-3-checkout/" class="nav-btn">View Cart & Checkout &rarr;</a>
+  <a href="https://kshitij-bhuwania.github.io/table-1-checkout/" class="nav-btn">View Cart & Checkout &rarr;</a>
 
   <script>
-    const TABLE_KEY = "cart_table_3";
+    const TABLE_KEY = "cart_table_1";
+    // Store dropdown open states so re-rendering doesn't close active categories
+    const activeCategories = {};
 
     const menuData = [
       {
@@ -326,8 +343,29 @@
       let cart = getCart();
       let allItems = menuData.flatMap(c => c.items.map(i => ({...i, category: c.category})));
       const item = allItems.find(i => i.id === id);
-      if (!cart.some(i => i.id === id)) {
-        cart.push(item);
+      
+      const existing = cart.find(i => i.id === id);
+      if (existing) {
+        existing.quantity = (existing.quantity || 1) + 1;
+      } else {
+        cart.push({ ...item, quantity: 1 });
+      }
+      
+      localStorage.setItem(TABLE_KEY, JSON.stringify(cart));
+      render();
+    }
+
+    function updateQuantity(id, change) {
+      let cart = getCart();
+      const itemIndex = cart.findIndex(i => i.id === id);
+      
+      if (itemIndex > -1) {
+        cart[itemIndex].quantity = (cart[itemIndex].quantity || 1) + change;
+        
+        if (cart[itemIndex].quantity <= 0) {
+          cart.splice(itemIndex, 1);
+        }
+        
         localStorage.setItem(TABLE_KEY, JSON.stringify(cart));
         render();
       }
@@ -339,34 +377,81 @@
       render();
     }
 
+    function toggleCategory(catIndex) {
+      activeCategories[catIndex] = !activeCategories[catIndex];
+      const content = document.getElementById(`cat-content-${catIndex}`);
+      const arrow = document.getElementById(`cat-arrow-${catIndex}`);
+      
+      if (activeCategories[catIndex]) {
+        content.classList.add("active");
+        arrow.classList.add("open");
+      } else {
+        content.classList.remove("active");
+        arrow.classList.remove("open");
+      }
+    }
+
     function render() {
       const cart = getCart();
       const container = document.getElementById("menuContainer");
       container.innerHTML = "";
 
-      menuData.forEach(cat => {
-        const catTitle = document.createElement("h2");
-        catTitle.className = "category-title";
-        catTitle.textContent = cat.category;
-        container.appendChild(catTitle);
+      menuData.forEach((cat, index) => {
+        const catContainer = document.createElement("div");
+        catContainer.className = "dropdown-container";
+
+        const isOpen = !!activeCategories[index];
+
+        const btn = document.createElement("button");
+        btn.className = "dropdown-btn";
+        btn.onclick = () => toggleCategory(index);
+        btn.innerHTML = `
+          <span>${cat.category}</span>
+          <span class="arrow ${isOpen ? 'open' : ''}" id="cat-arrow-${index}">▼</span>
+        `;
+        catContainer.appendChild(btn);
+
+        const content = document.createElement("div");
+        content.className = `dropdown-content ${isOpen ? 'active' : ''}`;
+        content.id = `cat-content-${index}`;
 
         const grid = document.createElement("div");
         grid.className = "grid";
 
         cat.items.forEach(item => {
-          const inCart = cart.some(i => i.id === item.id);
+          const cartItem = cart.find(i => i.id === item.id);
+          const quantity = cartItem ? (cartItem.quantity || 1) : 0;
+          
           const card = document.createElement("div");
           card.className = "card";
+          
+          let controlAreaHTML = '';
+          if (quantity > 0) {
+            controlAreaHTML = `
+              <div class="qty-controls">
+                <button class="qty-btn" onclick="updateQuantity(${item.id}, -1)">-</button>
+                <span class="qty-count">${quantity}</span>
+                <button class="qty-btn" onclick="updateQuantity(${item.id}, 1)">+</button>
+              </div>
+              <button class="btn-remove" onclick="removeFromCart(${item.id})">Remove</button>
+            `;
+          } else {
+            controlAreaHTML = `
+              <button class="btn-add" onclick="addToCart(${item.id})">Add</button>
+            `;
+          }
+
           card.innerHTML = `
             <h4>${item.name}</h4>
             <div class="price">₹${item.price}</div>
-            <button class="btn-add" onclick="addToCart(${item.id})" ${inCart ? 'disabled' : ''}>${inCart ? 'In Cart' : 'Add'}</button>
-            ${inCart ? `<button class="btn-remove" onclick="removeFromCart(${item.id})">Remove</button>` : ''}
+            ${controlAreaHTML}
           `;
           grid.appendChild(card);
         });
 
-        container.appendChild(grid);
+        content.appendChild(grid);
+        catContainer.appendChild(content);
+        container.appendChild(catContainer);
       });
     }
 
