@@ -42,7 +42,7 @@
   <a href="https://kshitij-bhuwania.github.io/table-3-checkout/" class="nav-btn">View Cart & Checkout &rarr;</a>
 
   <script>
-    const TABLE_KEY = "cart_table_1";
+    const TABLE_KEY = "cart_table_3";
     // Store dropdown open states so re-rendering doesn't close active categories
     const activeCategories = {};
 
